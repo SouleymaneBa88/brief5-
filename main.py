@@ -76,6 +76,7 @@ def modifier_categories():
     while True:
         try:
             id_categorie = int (input("indiquer l'id du categorie a modifier"))
+            break
         except ValueError:
             print("erreur id categorie")
         try:
@@ -105,6 +106,7 @@ def delete_categorie():
     while True:
         try:
             id_categorie = int (input ("Indiquez l'id de la ligne que vous voulez supprime : "))
+            break
         except ValueError:
             print("oups ! erreur , ressaisi")
     query = """
@@ -122,6 +124,7 @@ def recherches():
     while True:
         try:
             id_produit = int(input("indiquez l'id du produits a rechercher : "))
+            break
         except ValueError:
             print("erreur! veuillez bien indiquer l'id")
         try:
@@ -220,6 +223,7 @@ def marquer_status_produit():
         print("Marquer le status enrupture si c'est epuiser ")
         try:
             id_produit = int(input("Indiquer l'id du produit : "))
+            break
         except ValueError:
             print("erreur au niveau de l'id produit")
         try:
@@ -245,6 +249,7 @@ def modifier_produits():
     while True:
         try:
             id_produit = int(input("indiquer l'id du produit a modifier"))
+            break
         except ValueError:
             print("erreur")
         try:
