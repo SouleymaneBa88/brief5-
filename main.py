@@ -17,6 +17,8 @@ def afficher_menu():
     print("2. Produits")
     print("3. recherches produits correspondant categories ")
     print("4. Indiquer le mouvement")
+    print("5.historiques")
+    print("6.Quitter")
 
 
 #menu categorie
@@ -74,6 +76,7 @@ def categories():
 def modifier_categories():
     cursor = connection.cursor()
     while True:
+        list_categories()
         try:
             id_categorie = int (input("indiquer l'id du categorie a modifier"))
             break
@@ -104,6 +107,7 @@ def modifier_categories():
 def delete_categorie():
     cursor = connection.cursor()
     while True:
+        list_categories()
         try:
             id_categorie = int (input ("Indiquez l'id de la ligne que vous voulez supprime : "))
             break
@@ -117,32 +121,53 @@ def delete_categorie():
     connection.commit()
     cursor.close()
 
+#liste des categories
+def list_categories():
+    cursor = connection.cursor(dictionary=True)  
+    cursor.execute("SELECT * FROM categories")
+    categories = cursor.fetchall()
+    cursor.close()
+
+    for cat in categories:
+        print(f"ID: {cat['id_categorie']}")
+        print(f"Nom: {cat['nom_categorie']}")
+        print("-" * 20)  
+
+    # return categories
 
 #recherches  
 def recherches():
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
+
     while True:
         try:
-            id_produit = int(input("indiquez l'id du produits a rechercher : "))
+            id_produit = int(input("Indiquez l'id du produit à rechercher : "))
             break
         except ValueError:
-            print("erreur! veuillez bien indiquer l'id")
-        try:
-            nom_produit = input("ou donnez le nom : ").lower()
-            if nom_produit.isalpha():
-                break
-        except ValueError:
-            print("erreur veuillez resaisir")
+            print("Erreur! Veuillez bien indiquer l'id")
+
+    nom_produit = input("Ou donnez le nom du produit (optionnel) : ").lower()
+    if nom_produit.strip() == "":
+        nom_produit = None
+
     query = """
-                select * 
-                from produits pro
-                join categories cat on pro.id_categorie = cat.id_categorie
-                where id_produit = %s or nom_produit = %s
-        """
-    cursor.execute(query, (id_produit,nom_produit))
+        SELECT *
+        FROM produits pro
+        JOIN categories cat ON pro.id_categorie = cat.id_categorie
+        WHERE pro.id_produit = %s OR (%s IS NOT NULL AND pro.nom_produit = %s)
+    """
+    cursor.execute(query, (id_produit, nom_produit, nom_produit))
     produit = cursor.fetchone()
-    print(f"{produit}")
+
+    if produit:
+        print("Produit trouvé :")
+        for key, value in produit.items():
+            print(f"{key}: {value}")
+    else:
+        print("Aucun produit trouvé avec cet ID ou nom.")
+
     cursor.close()
+
 
 
 
@@ -155,7 +180,8 @@ def menu_produits():
     print("3. supprimer ")
     print("4. alert")
     print("5. modifier")
-    print("5. retour accueil")
+    print("6.liste des produits")
+    print("7. retour accueil")
     while True :   
         while True:
             try:
@@ -177,44 +203,68 @@ def menu_produits():
             alert()
         elif choix == 5:
             afficher_menu()
+        elif choix == 6:
+            list_produits()
+        elif choix == 7:
+            print("bye bye")
             break
         
 # ajouter produits
 def produits():
     cursor = connection.cursor()
+    print("\n ajouter des produits")
+    while True:
+        nom_produit = input("Donner le nom du produit : ")
+        if nom_produit.strip() != "":
+            break
+        print("Erreur : le nom ne peut pas être vide")
+
     while True:
         try:
-            nom_produit =str( input("Donner Le nom du produit : "))
+            prix_produit = float(input("Donner le prix du produit : "))
             break
         except ValueError:
-            print("erreur dans l'input nom!")
-        try:    
-            prix_produit =float(input("Donner Le prix du produit : "))
+            print("Erreur : prix invalide")
+
+    while True:
+        description_produit = input("Donner la description du produit : ")
+        if description_produit.strip() != "":
             break
-        except ValueError:
-            print("erreur au niveau du prix")
+        print("Erreur : description vide")
+
+    while True:
         try:
-            description_produit =str( input("Donner Le description du produit : "))
+            quantite_produit = int(input("Donner la quantité du produit : "))
             break
         except ValueError:
-            print("erreur au niveau du description")
+            print("Erreur : quantité invalide")
+
+    print(list_categories())
+    while True:
         try:
-            quantite_produit =int( input("Donner Le quantite du produit : "))
+            id_categorie = int(input("Donner l'id de la catégorie : "))
             break
         except ValueError:
-            print("erreur! dans la quantite")
-        try:
-            id_categorie =int( input("Donner L'id de la categorie qu'il correspond : "))
-            break
-        except ValueError:
-            print("erreur ! au niveau de l'id categorie")
+            print("Erreur : id catégorie invalide")
 
     query = """
-            insert into produits(nom_produit, prix_produit, description_produit, quantite_produit, id_categorie) values(%s,%s,%s,%s,%s)
-        """
-    cursor.execute(query, (nom_produit, prix_produit, description_produit, quantite_produit, id_categorie))
-    connection.commit()
+    INSERT INTO produits (nom_produit, prix_produit, description_produit, quantite_produit, id_categorie)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+    try:
+        cursor.execute(query, (
+            nom_produit,
+            prix_produit,
+            description_produit,
+            quantite_produit,
+            id_categorie
+        ))
+        connection.commit()
+    except Exception as e:
+        print("erreur venant de list ",e)
     cursor.close()
+
+    print("Produit ajouté avec succès")
 
 # marquer le status du produits
 def marquer_status_produit():
@@ -238,8 +288,11 @@ def marquer_status_produit():
             set satus_produit = %s 
             where id_produit = %s
         """
-    cursor.execute(query, (satus_produit,id_produit))
-    connection.commit()
+    try:
+        cursor.execute(query, (satus_produit,id_produit))
+        connection.commit()
+    except Exception as e:
+        print(f"erreur {e}")
     cursor.close()
 
 #modifier le produit 
@@ -295,6 +348,23 @@ def modifier_produits():
         print(f"ooup erreur ! {e}")
     cursor.close()
 
+#liste des produits
+def list_produits():
+    cursor = connection.cursor(dictionary=True)  
+    cursor.execute("SELECT * FROM produits")
+    produits = cursor.fetchall()
+    cursor.close()
+
+    for produit in produits:
+        print(f"ID: {produit['id_produit']}")
+        print(f"Nom: {produit['nom_produit']}")
+        print(f"Prix: {produit['prix_produit']}")
+        print(f"Description: {produit['description_produit']}")
+        print(f"Quantite: {produit['quantite_produit']}")
+        print(f"ID_categorie: {produit['id_categorie']}")
+        print("-" * 20)  
+
+
 # indiquer le mouvement ajouter les
 def indique_mouvement():
     cursor = connection.cursor()
@@ -303,15 +373,12 @@ def indique_mouvement():
     quantite = int(input("Quantité du mouvement : "))
     id_produit = int(input("ID du produit : "))
     dateHeure_mouvement = datetime.now()
-
-    # Récupérer la quantité actuelle du produit
     cursor.execute(
         "SELECT quantite_produit FROM produits WHERE id_produit = %s",
         (id_produit,)
     )
     result = cursor.fetchone()
     quantite_produit = result[0]
-    # Calculer la nouvelle quantité
     if type_mouvement == "ajouter":
         nouvelle_quantite = quantite_produit + quantite
     elif type_mouvement == "retirer":
@@ -323,36 +390,58 @@ def indique_mouvement():
     else:
         print("Action invalide")
 
-    # Mettre à jour le stock du produit
     query ="""
             UPDATE produits 
             SET quantite_produit = %s 
             WHERE id_produit = %s"""
-    
-    cursor.execute(query,(nouvelle_quantite, id_produit))
+    try:
+        cursor.execute(query,(nouvelle_quantite, id_produit))
+    except Exception as e:
+        print("erreur ", e)
 
-    # Enregistrer le mouvement
     query2 =  """
         INSERT INTO mouvements (type_mouvement, dateHeure_mouvement, quantite, id_produit)
         VALUES (%s, %s, %s, %s)
         """
-    cursor.execute(query2, (type_mouvement, dateHeure_mouvement, quantite, id_produit))
-    print(" Quantité récupérée, calculée et mise à jour")
-    connection.commit()
+    try:
+        cursor.execute(query2, (type_mouvement, dateHeure_mouvement, quantite, id_produit))
+        print(" Quantité récupérée, calculée et mise à jour")
+        connection.commit()
+    except Exception as e:
+        print("erreur ",e)
     cursor.close()
 
-    
-#afficher une message la quantite dans produits < 5
+def historiques():
+        cursor = connection.cursor(dictionary=True)  
+        cursor.execute("SELECT * FROM mouvements")
+        mouvements = cursor.fetchall()
+        cursor.close()
+
+        for mouvement in mouvements:
+            print(f"ID: {mouvement['id_mouvement']}")
+            print(f"Quantites: {mouvement['quantite']}")
+            print(f"Date et heure: {mouvement['dateHeure_mouvement']}")
+            print(f"Action: {mouvement['type_mouvement']}")
+            print(f"ID_produit: {mouvement['id_produit']}")
+
+            print("-" * 20) 
 def alert():
-    cursor = connection.cursor()
-
-    query = """ select * from produits
-                where qunatite_produit < 5
-        """
+    cursor = connection.cursor(dictionary=True)
+    query = "SELECT * FROM produits WHERE quantite_produit < 5"
     cursor.execute(query)
-    return cursor.fetchall
-    print("Alert solde de le stockage est insuffisant")
+    produits_faible = cursor.fetchall()
+    
+    if produits_faible: 
+        print(" Alert: le stock est insuffisant pour les produits suivants :")
+        for prod in produits_faible:
+            print(f"ID: {prod['id_produit']}, Nom: {prod['nom_produit']}, Quantité: {prod['quantite_produit']}")
+            print("-" * 20)
+    else:
+        print("Tous les produits ont une quantité suffisante")
+
     cursor.close()
+    return produits_faible
+
 
 #fermeture de la connexion
 def fermeture_connextion():
@@ -371,8 +460,11 @@ def delete():
             delete from produit
             where id_produit = %s
         """
-    cursor.execute(query, (id_produit ))
-    connection.commit()
+    try:
+        cursor.execute(query, (id_produit ))
+        connection.commit()
+    except Exception as e:
+        print("erreur detecter ",e)
     cursor.close()
 
 
@@ -381,8 +473,8 @@ while True:
     afficher_menu()
     while True:
         try:
-            choix=int(input("Veuillez choisir un nombre entre 1 et 4 : "))
-            if 1 <= choix <=4:
+            choix=int(input("Veuillez choisir un nombre entre 1 et 6 : "))
+            if 1 <= choix <=6:
                 break
             else:
                 print("incorrect! choisi bien")
@@ -396,4 +488,8 @@ while True:
     elif choix == 3:
         recherches()
     elif choix == 4:
+        indique_mouvement()
+    elif choix == 5:
+        historiques()
+    elif choix == 6:
         fermeture_connextion()
