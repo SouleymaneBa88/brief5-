@@ -3,13 +3,17 @@ from datetime import datetime
 from email_validator import validate_email,EmailNotValidError 
 import getpass
 import bcrypt
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 connection = mysql.connector.connect(
-    host = 'localhost',
-    user ='pythonuser',
-    password ='Python@123',
-    database ='boutique_pro'
+        host = os.getenv("DB_HOST"),
+        user= os.getenv("DB_USER"),
+        password= os.getenv("DB_PASSWORD"),
+        database= os.getenv("DB_NAME")
 )
 
 if connection.is_connected():
@@ -32,7 +36,6 @@ def hash_password(passwordvalid):
     else:
         print("erreur")
     return hashed
-
     
 def user_menu():
     print("\n --Gestion du boutique Pro--")
@@ -43,7 +46,7 @@ def user_menu():
     print("5.Deconnection")
     
 def users():
-    # menu principal
+    # menu principal user
     while True:
         user_menu()
         while True:
@@ -69,12 +72,15 @@ def users():
             break
         break
 
-def menu_connect():
-    print("\n (10 *(-))'Formulaire D'inscription'  (10 *(-))") 
-    print("1. Inscription")
-    print("2. Quitter")
 
-def login():
+
+
+def verify_password(password, hashed_password):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+
+#inscription
+def registre():
     cursor = connection.cursor()
     print("Formulaire d'inscription")
 
@@ -96,10 +102,7 @@ def login():
     print(password)
 
     role = input("Votre role admin/utilisateur : ")
-    if role =='admin':
-        main()
-    else:
-        users()
+    
     query = """
         INSERT INTO users (nom, prenom, email, password, role)
         VALUES (%s, %s, %s, %s, %s)
@@ -109,9 +112,83 @@ def login():
         connection.commit()
     except Exception as e:
         print(" ERREUR SQL :", e)
+    print("Inscription avec success !")
+    cursor.close()
+    return nav_connect()
+
+
+#connection
+def login():
+    cursor = connection.cursor(dictionary=True)
+    print("\n--- Connexion utilisateur ---")
+
+    while True:
+        email = input("Votre email : ").strip()
+
+        if not email:
+            print(" L'email est obligatoire")
+            continue
+
+        if not controle_email(email):
+            print(" Format email invalide")
+            continue
+
+        break
+
+    while True:
+        password = input("Votre mot de passe : ").strip()
+
+        if not password:
+            print(" Le mot de passe est obligatoire")
+            continue
+
+        break
+
+    query = """
+        SELECT id_user, nom, prenom, email, password, role
+        FROM users
+        WHERE email = %s
+    """
+    cursor.execute(query, (email,))
+    user = cursor.fetchone()
+
+    if not user:
+        print("2 Aucun compte associé à cet email")
+        cursor.close()
+        return
+
+    if not verify_password(password, user['password']):
+        print("Mot de passe incorrect")
+        cursor.close()
+        return
+
+    print(f" Bienvenue {user['prenom']} ({user['role']})")
+
+    if user['role'] == 'admin':
+        main()
+    else:
+        users()
 
     cursor.close()
 
+
+def liste_user():
+    cursor = connection.cursor(dictionary=True)
+
+    query ="""
+            select id_user, nom, prenom,email,role
+            from users
+            """
+    cursor.execute(query)
+    users = cursor.fetchall()
+    cursor.close()
+
+    for user in users:
+        print(f"ID : {user['id_user']}")
+        print(f"Nom : {user['nom']}")
+        print(f"Prenom : {user['prenom']}")
+        print(f"Mail : {user['email']}")
+        print(f"Role : {user['role']}")
 
 #menu choix
 def afficher_menu():
@@ -121,8 +198,8 @@ def afficher_menu():
     print("3. recherches produits correspondant categories ")
     print("4. Indiquer le mouvement")
     print("5.historiques")
-    print("6.Deconnection")
-
+    print("6.Listes personnes users")
+    print("7.Deconnection")
 
 #menu categorie
 def menu_categories():
@@ -236,7 +313,6 @@ def list_categories():
         print(f"Nom: {cat['nom_categorie']}")
         print("-" * 20)  
 
-    # return categories
 
 #recherches  
 def recherches():
@@ -464,7 +540,6 @@ def list_produits():
         print(f"ID_categorie: {produit['id_categorie']}")
         print("-" * 20)  
 
-
 # indiquer le mouvement ajouter les
 def indique_mouvement():
     cursor = connection.cursor()
@@ -566,14 +641,15 @@ def delete():
         print("erreur detecter ",e)
     cursor.close()
 
+
 def main():
-    # menu principal
+    # menu principal admin
     while True:
         afficher_menu()
         while True:
             try:
-                choix=int(input("Veuillez choisir un nombre entre 1 et 6 : "))
-                if 1 <= choix <=6:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 7 : "))
+                if 1 <= choix <=7:
                     break
                 else:
                     print("incorrect! choisi bien")
@@ -591,11 +667,18 @@ def main():
         elif choix == 5:
             historiques()
         elif choix == 6:
+            liste_user()
+        elif choix == 7:
             menu_connect()
+            break
 
+def menu_connect():
+    print("\n -----'Formulaire D'inscription' ----") 
+    print("1. Connexion ")
+    print("2. Quitter")
 
- # menu principal
-while True:
+def nav_connect():
+    while True:
         menu_connect()
         while True:
             try:
@@ -611,4 +694,28 @@ while True:
             login()
         elif choix == 2:
             fermeture_connextion()
-            
+            break
+        
+def menu_inscription():
+    print("\n -----'Formulaire D'inscription' ----") 
+    print("1. Inscription")
+    print("2. Quitter")
+
+ # menu principal
+while True:
+        menu_inscription()
+        while True:
+            try:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 2 : "))
+                if 1 <= choix <=2:
+                    break
+                else:
+                    print("incorrect! choisi bien")
+            except ValueError:
+                print("Invalid! Veuillez resaisir correctement")
+
+        if choix == 1:
+            registre()
+        elif choix == 2:
+            fermeture_connextion()
+            break
