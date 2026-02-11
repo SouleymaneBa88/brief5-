@@ -1,5 +1,10 @@
 import mysql.connector
 from datetime import datetime
+from email_validator import validate_email,EmailNotValidError 
+import getpass
+import bcrypt
+
+
 connection = mysql.connector.connect(
     host = 'localhost',
     user ='pythonuser',
@@ -10,6 +15,104 @@ connection = mysql.connector.connect(
 if connection.is_connected():
     print("Connected to mysql database")
 
+def controle_email(email):
+    try: 
+        infos = validate_email(email,check_deliverability= False)
+        return infos.normalized
+    except EmailNotValidError as e:
+        print(f"Email invalide : {str(e)}")
+
+def hash_password(passwordvalid):
+    password_bytes = passwordvalid.encode('utf-8')
+    salt= bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+
+    if bcrypt.checkpw(password_bytes, hashed):
+        print("hash avec succes !")
+    else:
+        print("erreur")
+    return hashed
+
+    
+def user_menu():
+    print("\n --Gestion du boutique Pro--")
+    print("1. categories")
+    print("2. Produits")
+    print("3. recherches produits correspondant categories ")
+    print("4. Indiquer le mouvement")
+    print("5.Deconnection")
+    
+def users():
+    # menu principal
+    while True:
+        user_menu()
+        while True:
+            try:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 5 : "))
+                if 1 <= choix <=5:
+                    break
+                else:
+                    print("incorrect! choisi bien")
+            except ValueError:
+                print("Invalid! Veuillez resaisir correctement")
+
+        if choix == 1:
+            menu_categories()
+        elif choix == 2:
+            menu_produits()
+        elif choix == 3:
+            recherches()
+        elif choix == 4:
+            indique_mouvement()
+        elif choix == 5:
+            menu_connect()
+            break
+        break
+
+def menu_connect():
+    print("\n (10 *(-))'Formulaire D'inscription'  (10 *(-))") 
+    print("1. Inscription")
+    print("2. Quitter")
+
+def login():
+    cursor = connection.cursor()
+    print("Formulaire d'inscription")
+
+    nom = input("Votre nom : ")
+    prenom = input("Votre prenom : ")
+    email = input("Votre mail : ")
+    while True:
+        try:
+            emailValide = controle_email(email)
+            if email == emailValide:
+                print("mail au top")
+                break
+        except  ValueError as e:
+            print(f"Oups erreur niveau mail {e}")
+            break
+
+    password = input("Votre mot de passe : ")
+    password_hash = hash_password(password)
+    print(password)
+
+    role = input("Votre role admin/utilisateur : ")
+    if role =='admin':
+        main()
+    else:
+        users()
+    query = """
+        INSERT INTO users (nom, prenom, email, password, role)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    try:
+        cursor.execute(query, (nom, prenom, email, password_hash, role))
+        connection.commit()
+    except Exception as e:
+        print(" ERREUR SQL :", e)
+
+    cursor.close()
+
+
 #menu choix
 def afficher_menu():
     print("\n --Gestion du boutique Pro--")
@@ -18,7 +121,7 @@ def afficher_menu():
     print("3. recherches produits correspondant categories ")
     print("4. Indiquer le mouvement")
     print("5.historiques")
-    print("6.Quitter")
+    print("6.Deconnection")
 
 
 #menu categorie
@@ -28,8 +131,8 @@ def menu_categories():
     print("1. Ajouter categories")
     print("2. modifier")
     print("3. supprimer ")
-    print("4. recherches ")
-    print("5. retour accueil")
+    print("4. Lister ")
+    print("5. Deconnexion")
     while True:
         while True:
             try:
@@ -167,9 +270,6 @@ def recherches():
         print("Aucun produit trouvé avec cet ID ou nom.")
 
     cursor.close()
-
-
-
 
 #menu produit
 def menu_produits():
@@ -442,7 +542,6 @@ def alert():
     cursor.close()
     return produits_faible
 
-
 #fermeture de la connexion
 def fermeture_connextion():
         connection.close()
@@ -467,29 +566,49 @@ def delete():
         print("erreur detecter ",e)
     cursor.close()
 
-
+def main():
     # menu principal
-while True:
-    afficher_menu()
     while True:
-        try:
-            choix=int(input("Veuillez choisir un nombre entre 1 et 6 : "))
-            if 1 <= choix <=6:
-                break
-            else:
-                print("incorrect! choisi bien")
-        except ValueError:
-            print("Invalid! Veuillez resaisir correctement")
+        afficher_menu()
+        while True:
+            try:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 6 : "))
+                if 1 <= choix <=6:
+                    break
+                else:
+                    print("incorrect! choisi bien")
+            except ValueError:
+                print("Invalid! Veuillez resaisir correctement")
 
-    if choix == 1:
-        menu_categories()
-    elif choix == 2:
-        menu_produits()
-    elif choix == 3:
-        recherches()
-    elif choix == 4:
-        indique_mouvement()
-    elif choix == 5:
-        historiques()
-    elif choix == 6:
-        fermeture_connextion()
+        if choix == 1:
+            menu_categories()
+        elif choix == 2:
+            menu_produits()
+        elif choix == 3:
+            recherches()
+        elif choix == 4:
+            indique_mouvement()
+        elif choix == 5:
+            historiques()
+        elif choix == 6:
+            menu_connect()
+
+
+ # menu principal
+while True:
+        menu_connect()
+        while True:
+            try:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 2 : "))
+                if 1 <= choix <=2:
+                    break
+                else:
+                    print("incorrect! choisi bien")
+            except ValueError:
+                print("Invalid! Veuillez resaisir correctement")
+
+        if choix == 1:
+            login()
+        elif choix == 2:
+            fermeture_connextion()
+            
