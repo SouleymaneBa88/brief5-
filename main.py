@@ -36,7 +36,69 @@ def hash_password(passwordvalid):
     else:
         print("erreur")
     return hashed
-    
+
+
+def main():
+    # menu principal admin
+    while True:
+        afficher_menu()
+        while True:
+            try:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 7 : "))
+                if 1 <= choix <=7:
+                    break
+                else:
+                    print("incorrect! choisi bien")
+            except ValueError:
+                print("Invalid! Veuillez resaisir correctement")
+
+        if choix == 1:
+            menu_categories()
+        elif choix == 2:
+            menu_produits()
+        elif choix == 3:
+            recherches()
+        elif choix == 4:
+            indique_mouvement()
+        elif choix == 5:
+            historiques()
+        elif choix == 6:
+            liste_user()
+        elif choix == 7:
+            menu_connect()
+            break
+
+
+def menu_connect():
+    print("\n -----'Formulaire D'inscription' ----") 
+    print("1. Connexion ")
+    print("2. Quitter")
+
+
+def nav_connect():
+    while True:
+        menu_connect()
+        while True:
+            try:
+                choix=int(input("Veuillez choisir un nombre entre 1 et 2 : "))
+                if 1 <= choix <=2:
+                    break
+                else:
+                    print("incorrect! choisi bien")
+            except ValueError:
+                print("Invalid! Veuillez resaisir correctement")
+
+        if choix == 1:
+            login()
+        elif choix == 2:
+            fermeture_connextion()
+            break
+        
+def menu_inscription():
+    print("\n -----'Formulaire D'inscription' ----") 
+    print("1. Inscription")
+    print("2. Quitter")
+
 def user_menu():
     print("\n --Gestion du boutique Pro--")
     print("1. categories")
@@ -71,8 +133,6 @@ def users():
             menu_connect()
             break
         break
-
-
 
 
 def verify_password(password, hashed_password):
@@ -312,7 +372,6 @@ def list_categories():
         print(f"ID: {cat['id_categorie']}")
         print(f"Nom: {cat['nom_categorie']}")
         print("-" * 20)  
-
 
 #recherches  
 def recherches():
@@ -642,64 +701,6 @@ def delete():
     cursor.close()
 
 
-def main():
-    # menu principal admin
-    while True:
-        afficher_menu()
-        while True:
-            try:
-                choix=int(input("Veuillez choisir un nombre entre 1 et 7 : "))
-                if 1 <= choix <=7:
-                    break
-                else:
-                    print("incorrect! choisi bien")
-            except ValueError:
-                print("Invalid! Veuillez resaisir correctement")
-
-        if choix == 1:
-            menu_categories()
-        elif choix == 2:
-            menu_produits()
-        elif choix == 3:
-            recherches()
-        elif choix == 4:
-            indique_mouvement()
-        elif choix == 5:
-            historiques()
-        elif choix == 6:
-            liste_user()
-        elif choix == 7:
-            menu_connect()
-            break
-
-def menu_connect():
-    print("\n -----'Formulaire D'inscription' ----") 
-    print("1. Connexion ")
-    print("2. Quitter")
-
-def nav_connect():
-    while True:
-        menu_connect()
-        while True:
-            try:
-                choix=int(input("Veuillez choisir un nombre entre 1 et 2 : "))
-                if 1 <= choix <=2:
-                    break
-                else:
-                    print("incorrect! choisi bien")
-            except ValueError:
-                print("Invalid! Veuillez resaisir correctement")
-
-        if choix == 1:
-            login()
-        elif choix == 2:
-            fermeture_connextion()
-            break
-        
-def menu_inscription():
-    print("\n -----'Formulaire D'inscription' ----") 
-    print("1. Inscription")
-    print("2. Quitter")
 
  # menu principal
 while True:

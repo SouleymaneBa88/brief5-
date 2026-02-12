@@ -1,59 +1,39 @@
-Gestion de Stock - Boutique Pro
-Description
+Inventory Manager
 
-Application Python/MySQL pour gérer un stock de matériel. Permet :
+Application console Python + MySQL pour la gestion sécurisée d’un stock.
 
-Gestion des catégories (ajout, modification, suppression, liste)
+Sécurité
 
-Gestion des produits (ajout, modification, suppression, liste, statut disponible/enrupture)
+Hachage des mots de passe avec bcrypt
 
-Gestion des mouvements de stock (entrée/sortie) avec historique
+Aucun mot de passe stocké en clair
 
-Alertes pour produits en faible stock (<5 unités)
+Connexion obligatoire avant accès au menu
 
-Recherches par ID ou nom de produit
+Gestion des rôles (admin, utilisateur)
 
-Structure de la base de données
+Technologies
 
-Tables principales :
+Python 3
 
-categories (id_categorie, nom_categorie, description_categorie)
+MySQL
 
-produits (id_produit, nom_produit, prix_produit, description_produit, quantite_produit, id_categorie, satus_produit)
+mysql-connector-python
 
-mouvements (id_mouvement, type_mouvement, dateHeure_mouvement, quantite, id_produit)
+bcrypt
 
-Chaque mouvement met à jour le stock et est historisé.
+python-dotenv
 
-Installation et exécution
-
-Installer les dépendances :
-
-pip install mysql-connector-python
-
-
-Créer la base boutique_pro et les tables.
-
-Configurer la connexion dans main.py :
-
-connection = mysql.connector.connect(
-    host='localhost',
-    user='pythonuser',
-    password='Python@123',
-    database='boutique_pro'
-)
-
-
-Lancer le programme :
-
+Lancement
+pip install mysql-connector-python bcrypt python-dotenv email-validator
 python main.py
 
-Fonctionnalités principales
+Fonctionnalités
 
-Menu interactif pour gérer catégories, produits et mouvements
+Inscription & connexion sécurisées
 
-Historique des mouvements consultable
+Gestion des catégories et produits
 
-Alertes produits à faible stock
+Suivi des mouvements de stock
 
-Recherche de produit par ID ou nom
+Accès restreint selon le rôle
